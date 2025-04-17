@@ -2,25 +2,26 @@ package com.example.composecharactersbase.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.composecharactersbase.repository.CharacterRepository
-import com.example.composecharactersbase.model.Character
+import com.example.composecharactersbase.data.model.Character
+import com.example.composecharactersbase.data.remote.RetrofitInstance
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.State
 
 class CharacterViewModel : ViewModel() {
-    private val _characters = mutableStateOf<List<Character>>(emptyList())
-    val characters: State<List<Character>> = _characters
-
-    private val repository = CharacterRepository()
+    private val _characters = MutableStateFlow<List<Character>>(emptyList())
+    val characters: StateFlow<List<Character>> get() = _characters
 
     init {
-        getCharacters()
+        fetchCharacters()
     }
 
-    private fun getCharacters() {
+    private fun fetchCharacters() {
         viewModelScope.launch {
-            _characters.value = repository.getCharacters()
+            val response = RetrofitInstance.api.getCharacters()
+            if (response.isSuccessful) {
+                _characters.value = response.body()?.results ?: emptyList()
+            }
         }
     }
 }
